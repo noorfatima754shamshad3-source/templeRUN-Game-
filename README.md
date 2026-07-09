@@ -1,2 +1,7 @@
 # templeRUN-Game-
 **Temple Run** is an endless runner game in which the player controls an explorer escaping from dangerous creatures while collecting coins and avoiding obstacles. The game tests the player's reflexes through fast-paced running, jumping, sliding, and turning on an ever-changing path.
+**Temple Run Game (HTML)**
+
+Developed a responsive **Temple Run-inspired web game** using **HTML, CSS, and JavaScript**, recreating the core gameplay mechanics of the popular endless runner game. The player controls a running character who must avoid obstacles, collect coins, and achieve the highest possible score through smooth keyboard controls and dynamic gameplay. The game features real-time score tracking, increasing difficulty, collision detection, and an interactive user interface to enhance the gaming experience.
+
+A unique feature of this project is the implementation of a **three-life system**, allowing players to survive up to three collisions before the game ends, making the gameplay more engaging and challenging. Additional features include a game start screen, game over screen, restart functionality, responsive design for different screen sizes, animations, and sound effects (if applicable). This project strengthened my skills in front-end web development, JavaScript game logic, event handling, DOM manipulation, CSS animations, and creating interactive browser-based applications.
