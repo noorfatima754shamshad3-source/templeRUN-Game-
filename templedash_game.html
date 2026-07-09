@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TEMPLE DASH — Cursed Jungle Run</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600&display=swap');
+
+  :root {
+    --gold: #FFB830;
+    --dark-gold: #C8860A;
+    --jade: #2ECC71;
+    --dark: #0A0A0F;
+    --deep: #0D1117;
+    --stone: #1A1A2E;
+    --red: #E74C3C;
+    --sky1: #0D1117;
+    --sky2: #1A0A2E;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--dark);
+    font-family: 'Cinzel', serif;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    user-select: none;
+  }
+
+  #wrapper {
+    position: relative;
+    width: 800px;
+    height: 500px;
+  }
+
+  canvas {
+    display: block;
+    border: 2px solid var(--gold);
+    box-shadow:
+      0 0 40px rgba(255,184,48,0.3),
+      0 0 80px rgba(255,184,48,0.1),
+      inset 0 0 30px rgba(0,0,0,0.8);
+    border-radius: 4px;
+  }
+
+  #ui-overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+
+  #score-display {
+    position: absolute;
+    top: 16px; right: 20px;
+    color: var(--gold);
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 18px;
+    text-shadow: 0 0 10px rgba(255,184,48,0.6);
+    letter-spacing: 2px;
+  }
+
+  #lives-display {
+    position: absolute;
+    top: 16px; left: 20px;
+    color: var(--red);
+    font-size: 20px;
+    letter-spacing: 4px;
+  }
+
+  #combo-display {
+    position: absolute;
+    top: 50px; right: 20px;
+    color: #fff;
+    font-size: 13px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    text-shadow: 0 0 8px rgba(255,255,255,0.4);
+  }
+
+  #screen {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10,10,15,0.92);
+    pointer-events: all;
+  }
+
+  #screen h1 {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 42px;
+    color: var(--gold);
+    text-shadow: 0 0 30px rgba(255,184,48,0.7), 0 0 60px rgba(255,184,48,0.3);
+    letter-spacing: 6px;
+    margin-bottom: 8px;
+  }
+
+  #screen .subtitle {
+    color: rgba(255,184,48,0.6);
+    font-size: 13px;
+    letter-spacing: 8px;
+    margin-bottom: 40px;
+  }
+
+  .btn {
+    background: linear-gradient(135deg, var(--dark-gold), var(--gold));
+    color: #000;
+    border: none;
+    padding: 14px 50px;
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    cursor: pointer;
+    border-radius: 2px;
+    box-shadow: 0 0 20px rgba(255,184,48,0.4);
+    transition: all 0.2s;
+    margin: 8px;
+  }
+  .btn:hover {
+    box-shadow: 0 0 40px rgba(255,184,48,0.7);
+    transform: scale(1.05);
+  }
+
+  .controls-hint {
+    margin-top: 28px;
+    color: rgba(255,255,255,0.4);
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-align: center;
+    line-height: 2;
+  }
+
+  #final-score {
+    color: var(--gold);
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 28px;
+    margin-bottom: 6px;
+    text-shadow: 0 0 20px rgba(255,184,48,0.6);
+  }
+
+  #high-score-label {
+    color: rgba(255,184,48,0.5);
+    font-size: 12px;
+    letter-spacing: 4px;
+    margin-bottom: 30px;
+  }
+
+  #title-deco {
+    font-size: 48px;
+    margin-bottom: 16px;
+    filter: drop-shadow(0 0 10px rgba(255,184,48,0.5));
+  }
+
+  #instructions {
+    font-size: 11px;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 2px;
+    text-align: center;
+    line-height: 2.2;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+
+<div id="wrapper">
+  <canvas id="gameCanvas" width="800" height="500"></canvas>
+  <div id="ui-overlay">
+    <div id="score-display">SCORE: <span id="scoreVal">0</span></div>
+    <div id="lives-display" id="livesVal">❤️❤️❤️</div>
+    <div id="combo-display" id="comboVal"></div>
+  </div>
+
+  <!-- Screens -->
+  <div id="screen" id="menuScreen">
+    <div id="title-deco">🏛️</div>
+    <h1>TEMPLE DASH</h1>
+    <div class="subtitle">✦ CURSED JUNGLE RUN ✦</div>
+    <button class="btn" onclick="startGame()">▶ BEGIN RUN</button>
+    <div class="controls-hint">
+      ↑ / W / SPACE — JUMP &nbsp;|&nbsp; ↓ / S — SLIDE<br>
+      DOUBLE-TAP JUMP — DOUBLE JUMP<br>
+      COLLECT GEMS 💎 — AVOID TRAPS ☠️
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+// ─── State ───────────────────────────────────────────
+let state = 'menu'; // menu | playing | dead
+let score = 0, hiScore = 0, lives = 3, combo = 0, comboTimer = 0;
+let speed = 5, frame = 0, distance = 0;
+let jumpCount = 0;
+let bgOffset = 0, mgOffset = 0, fgOffset = 0;
+
+// ─── Player ──────────────────────────────────────────
+const PX = 120, GROUND = 340;
+const player = {
+  x: PX, y: GROUND, w: 44, h: 60,
+  vy: 0, onGround: true,
+  sliding: false, slideTimer: 0,
+  invincible: 0,
+  animFrame: 0, animTimer: 0,
+  trail: []
+};
+
+// ─── Arrays ──────────────────────────────────────────
+let obstacles = [], gems = [], particles = [], torches = [];
+
+// ─── Keys ────────────────────────────────────────────
+const keys = {};
+document.addEventListener('keydown', e => {
+  if (!keys[e.code]) {
+    keys[e.code] = true;
+    if (state === 'playing') {
+      if (['ArrowUp','KeyW','Space'].includes(e.code)) doJump();
+      if (['ArrowDown','KeyS'].includes(e.code)) doSlide();
+    }
+    if (state === 'dead' && e.code === 'Space') startGame();
+    if (state === 'menu' && e.code === 'Space') startGame();
+  }
+});
+document.addEventListener('keyup', e => {
+  keys[e.code] = false;
+  if (['ArrowDown','KeyS'].includes(e.code) && player.sliding) {
+    player.sliding = false;
+    player.h = 60;
+  }
+});
+
+// ─── Functions ────────────────────────────────────────
+function doJump() {
+  if (jumpCount < 2) {
+    player.vy = jumpCount === 0 ? -15 : -12;
+    player.onGround = false;
+    jumpCount++;
+    spawnJumpParticles();
+  }
+}
+
+function doSlide() {
+  if (player.onGround && !player.sliding) {
+    player.sliding = true;
+    player.slideTimer = 40;
+    player.h = 28;
+    player.y = GROUND + 32;
+  }
+}
+
+function startGame() {
+  state = 'playing';
+  score = 0; lives = 3; combo = 0; speed = 5; distance = 0; frame = 0;
+  obstacles = []; gems = []; particles = []; torches = [];
+  player.y = GROUND; player.vy = 0; player.onGround = true;
+  player.sliding = false; player.h = 60; player.invincible = 0;
+  jumpCount = 0;
+  document.getElementById('screen').style.display = 'none';
+  updateUI();
+  loop();
+}
+
+function showDead() {
+  state = 'dead';
+  if (score > hiScore) hiScore = score;
+  const scr = document.getElementById('screen');
+  scr.innerHTML = `
+    <div id="title-deco">💀</div>
+    <h1 style="font-size:32px">YOU FELL</h1>
+    <div class="subtitle">✦ THE TEMPLE CLAIMED YOU ✦</div>
+    <div id="final-score">SCORE: ${score}</div>
+    <div id="high-score-label">BEST: ${hiScore}</div>
+    <button class="btn" onclick="startGame()">↺ RUN AGAIN</button>
+    <div class="controls-hint">SPACE TO RESTART</div>
+  `;
+  scr.style.display = 'flex';
+}
+
+function updateUI() {
+  document.getElementById('scoreVal').textContent = score;
+  document.getElementById('lives-display').textContent = '❤️'.repeat(Math.max(0, lives));
+}
+
+// ─── Spawn Logic ─────────────────────────────────────
+let spawnTimer = 0, gemTimer = 0, torchTimer = 0;
+
+function spawnObstacle() {
+  const types = ['stone','spike','idol','boulder','pillar'];
+  const t = types[Math.floor(Math.random() * types.length)];
+  let h, w, sy;
+  switch(t) {
+    case 'stone':  w=38; h=50; sy=GROUND+(60-h); break;
+    case 'spike':  w=28; h=44; sy=GROUND+(60-h); break;
+    case 'idol':   w=36; h=70; sy=GROUND+(60-h); break;
+    case 'boulder':w=52; h=52; sy=GROUND+(60-h); break;
+    case 'pillar': w=28; h=110; sy=GROUND+(60-h)-50; break; // hanging from ceiling
+  }
+  // occasionally spawn low obstacles (must slide under)
+  const low = Math.random() < 0.2 && t !== 'pillar';
+  if (low) { w=70; h=30; sy=GROUND+(60-60)+10; }
+  obstacles.push({ x: W+60, y: sy, w, h, type: low?'low':t, low });
+}
+
+function spawnGem() {
+  const sx = W + 40;
+  const sy = GROUND - 30 - Math.random() * 80;
+  // line of 3-5 gems
+  const count = 3 + Math.floor(Math.random() * 3);
+  for (let i = 0; i < count; i++) {
+    gems.push({ x: sx + i*36, y: sy, r: 9, collected: false, bob: Math.random()*Math.PI*2 });
+  }
+}
+
+function spawnTorch() {
+  torches.push({ x: W + 20, flicker: 0 });
+}
+
+// ─── Particles ────────────────────────────────────────
+function spawnParticles(x, y, color, count, vx=0) {
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x, y,
+      vx: (Math.random()-0.5)*6 + vx,
+      vy: (Math.random()-0.5)*6 - 2,
+      life: 1, color,
+      size: 3 + Math.random()*4
+    });
+  }
+}
+
+function spawnJumpParticles() {
+  for (let i = 0; i < 8; i++) {
+    particles.push({
+      x: player.x + player.w/2,
+      y: player.y + player.h,
+      vx: (Math.random()-0.5)*5,
+      vy: Math.random()*3 + 1,
+      life: 1, color: '#8B5E3C',
+      size: 4 + Math.random()*3
+    });
+  }
+}
+
+// ─── Drawing ─────────────────────────────────────────
+function drawBackground() {
+  // Sky gradient
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, H);
+  skyGrad.addColorStop(0, '#050510');
+  skyGrad.addColorStop(0.6, '#0A0A20');
+  skyGrad.addColorStop(1, '#0D0A05');
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Stars
+  ctx.fillStyle = 'rgba(255,255,200,0.7)';
+  const stars = [[50,30],[150,60],[300,20],[450,45],[600,15],[700,55],[750,30],[100,80],[250,90],[380,70],[520,50],[680,80]];
+  stars.forEach(([sx,sy]) => {
+    const twinkle = Math.sin(frame * 0.05 + sx) * 0.5 + 0.5;
+    ctx.globalAlpha = 0.3 + twinkle * 0.7;
+    ctx.fillRect(sx, sy, 1.5, 1.5);
+  });
+  ctx.globalAlpha = 1;
+
+  // Moon
+  ctx.fillStyle = 'rgba(255,240,180,0.9)';
+  ctx.beginPath();
+  ctx.arc(680, 60, 22, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(10,10,30,0.95)';
+  ctx.beginPath();
+  ctx.arc(690, 55, 20, 0, Math.PI*2);
+  ctx.fill();
+
+  // Far temple silhouette
+  const tx = ((bgOffset * 0.3) % (W + 200)) - 200;
+  drawTempleShape(tx, 120);
+  drawTempleShape(tx + 350, 80);
+
+  // Jungle background trees (slow)
+  ctx.fillStyle = 'rgba(10,40,15,0.7)';
+  for (let i = 0; i < 12; i++) {
+    const bx = ((i * 90 - bgOffset * 0.4) % (W + 100) + W + 100) % (W + 100) - 50;
+    const bh = 100 + (i%3)*40;
+    drawTree(bx, H - 180, bh, 0.6);
+  }
+}
+
+function drawTempleShape(tx, ty) {
+  ctx.fillStyle = 'rgba(15,10,30,0.8)';
+  // Base
+  ctx.fillRect(tx, ty+120, 200, 60);
+  // Steps
+  ctx.fillRect(tx+20, ty+100, 160, 20);
+  ctx.fillRect(tx+40, ty+80, 120, 20);
+  ctx.fillRect(tx+60, ty+60, 80, 20);
+  ctx.fillRect(tx+75, ty+30, 50, 30);
+  ctx.fillRect(tx+85, ty, 30, 30);
+  // Columns
+  ctx.fillRect(tx+30, ty+80, 10, 40);
+  ctx.fillRect(tx+80, ty+80, 10, 40);
+  ctx.fillRect(tx+130, ty+80, 10, 40);
+  ctx.fillRect(tx+160, ty+80, 10, 40);
+}
+
+function drawTree(tx, ty, th, alpha) {
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = '#0A1E0A';
+  ctx.beginPath();
+  ctx.moveTo(tx, ty);
+  ctx.lineTo(tx-25, ty+th);
+  ctx.lineTo(tx+25, ty+th);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(tx, ty - th*0.3);
+  ctx.lineTo(tx-18, ty+th*0.5);
+  ctx.lineTo(tx+18, ty+th*0.5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
+function drawMidground() {
+  // Mid jungle
+  for (let i = 0; i < 8; i++) {
+    const bx = ((i * 130 - mgOffset * 0.6) % (W + 150) + W + 150) % (W + 150) - 60;
+    drawTree(bx, H - 210, 130, 0.85);
+  }
+
+  // Temple wall / ruins running
+  const wallY = H - 180;
+  ctx.fillStyle = '#1A1008';
+  ctx.fillRect(0, wallY, W, 30);
+  // Wall detail bricks
+  for (let bx = (-(mgOffset*0.7)%60+60)%60-30; bx < W; bx += 60) {
+    ctx.strokeStyle = 'rgba(100,80,40,0.3)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(bx, wallY, 60, 15);
+    ctx.strokeRect(bx+30, wallY+15, 60, 15);
+  }
+}
+
+function drawGround() {
+  // Ground layers
+  const gy = H - 155;
+
+  // Dirt base
+  const dirtGrad = ctx.createLinearGradient(0, gy, 0, H);
+  dirtGrad.addColorStop(0, '#2A1A08');
+  dirtGrad.addColorStop(0.3, '#1A0E05');
+  dirtGrad.addColorStop(1, '#0D0802');
+  ctx.fillStyle = dirtGrad;
+  ctx.fillRect(0, gy, W, H - gy);
+
+  // Stone path on top
+  ctx.fillStyle = '#3A2E1A';
+  ctx.fillRect(0, gy, W, 18);
+
+  // Scrolling stone tiles
+  ctx.strokeStyle = 'rgba(200,160,80,0.2)';
+  ctx.lineWidth = 1;
+  for (let tx = (-(fgOffset)%80+80)%80-40; tx < W; tx += 80) {
+    ctx.strokeRect(tx, gy, 80, 18);
+  }
+
+  // Moss/vine details on ground
+  ctx.fillStyle = 'rgba(30,80,20,0.5)';
+  for (let vx = (-(fgOffset*1.1)%120+120)%120-20; vx < W; vx += 120) {
+    ctx.beginPath();
+    ctx.ellipse(vx, gy+2, 15, 5, 0, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  // Foreground vines/grass
+  ctx.fillStyle = '#0A1E0A';
+  for (let gx = (-(fgOffset*1.5)%60+60)%60-20; gx < W; gx += 60) {
+    ctx.fillRect(gx, gy-15, 4, 18);
+    ctx.fillRect(gx+20, gy-10, 3, 13);
+  }
+}
+
+function drawTorches() {
+  torches.forEach(t => {
+    const tx = t.x;
+    const ty = GROUND - 70;
+    t.flicker = Math.sin(frame * 0.3 + t.x) * 3;
+
+    // Torch post
+    ctx.fillStyle = '#5A3A1A';
+    ctx.fillRect(tx - 3, ty, 6, 55);
+    // Bracket
+    ctx.fillStyle = '#8B6020';
+    ctx.fillRect(tx - 8, ty + 5, 16, 8);
+
+    // Flame glow
+    const flameGrad = ctx.createRadialGradient(tx, ty, 2, tx, ty, 20 + t.flicker);
+    flameGrad.addColorStop(0, 'rgba(255,200,50,0.9)');
+    flameGrad.addColorStop(0.4, 'rgba(255,100,0,0.5)');
+    flameGrad.addColorStop(1, 'rgba(255,50,0,0)');
+    ctx.fillStyle = flameGrad;
+    ctx.beginPath();
+    ctx.arc(tx, ty, 20 + t.flicker, 0, Math.PI*2);
+    ctx.fill();
+
+    // Flame shape
+    ctx.fillStyle = `rgba(255,${180 + t.flicker*5},30,0.9)`;
+    ctx.beginPath();
+    ctx.moveTo(tx, ty - 14 - t.flicker);
+    ctx.bezierCurveTo(tx+8, ty-5, tx+5, ty+5, tx, ty+8);
+    ctx.bezierCurveTo(tx-5, ty+5, tx-8, ty-5, tx, ty-14 - t.flicker);
+    ctx.fill();
+
+    // Inner white flame
+    ctx.fillStyle = 'rgba(255,255,200,0.8)';
+    ctx.beginPath();
+    ctx.moveTo(tx, ty - 8);
+    ctx.bezierCurveTo(tx+3, ty-3, tx+3, ty+2, tx, ty+4);
+    ctx.bezierCurveTo(tx-3, ty+2, tx-3, ty-3, tx, ty-8);
+    ctx.fill();
+  });
+}
+
+function drawObstacle(o) {
+  switch(o.type) {
+    case 'stone': drawStone(o); break;
+    case 'spike': drawSpike(o); break;
+    case 'idol':  drawIdol(o);  break;
+    case 'boulder': drawBoulder(o); break;
+    case 'pillar': drawPillar(o); break;
+    case 'low': drawLowObstacle(o); break;
+  }
+}
+
+function drawStone(o) {
+  ctx.fillStyle = '#4A3820';
+  ctx.beginPath();
+  ctx.roundRect(o.x, o.y, o.w, o.h, 5);
+  ctx.fill();
+  ctx.fillStyle = '#6A5030';
+  ctx.fillRect(o.x+5, o.y+5, o.w-10, 8);
+  ctx.strokeStyle = 'rgba(200,160,80,0.3)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(o.x, o.y, o.w, o.h);
+  // glowing rune
+  ctx.fillStyle = `rgba(255,100,0,${0.5+Math.sin(frame*0.1)*0.3})`;
+  ctx.font = '16px serif';
+  ctx.fillText('𓂀', o.x + 10, o.y + o.h/2 + 6);
+}
+
+function drawSpike(o) {
+  const sx = o.x, sy = o.y + o.h, sw = o.w;
+  ctx.fillStyle = '#8B7355';
+  ctx.fillRect(sx, sy-8, sw, 8);
+  const count = Math.floor(sw/14);
+  ctx.fillStyle = '#C0A060';
+  for (let i = 0; i < count; i++) {
+    ctx.beginPath();
+    ctx.moveTo(sx + i*14, sy);
+    ctx.lineTo(sx + i*14 + 7, sy - o.h);
+    ctx.lineTo(sx + i*14 + 14, sy);
+    ctx.closePath();
+    ctx.fill();
+    // highlight
+    ctx.fillStyle = 'rgba(255,220,150,0.4)';
+    ctx.beginPath();
+    ctx.moveTo(sx + i*14 + 3, sy - 5);
+    ctx.lineTo(sx + i*14 + 7, sy - o.h);
+    ctx.lineTo(sx + i*14 + 5, sy - 5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#C0A060';
+  }
+}
+
+function drawIdol(o) {
+  // Idol on pedestal
+  ctx.fillStyle = '#3A2810';
+  ctx.fillRect(o.x+5, o.y+o.h-16, o.w-10, 16);
+  // Body
+  ctx.fillStyle = '#6A5020';
+  ctx.fillRect(o.x+8, o.y+20, o.w-16, o.h-36);
+  // Head
+  ctx.fillStyle = '#8B6A2A';
+  ctx.beginPath();
+  ctx.arc(o.x+o.w/2, o.y+14, 14, 0, Math.PI*2);
+  ctx.fill();
+  // Eyes glow
+  const eg = 0.6 + Math.sin(frame*0.08)*0.4;
+  ctx.fillStyle = `rgba(255,0,0,${eg})`;
+  ctx.beginPath(); ctx.arc(o.x+o.w/2-5, o.y+12, 3, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(o.x+o.w/2+5, o.y+12, 3, 0, Math.PI*2); ctx.fill();
+  // Crown
+  ctx.fillStyle = '#C8860A';
+  for (let i = 0; i < 5; i++) {
+    ctx.fillRect(o.x+o.w/2 - 10 + i*5, o.y, 3, 6+Math.sin(i)*4);
+  }
+}
+
+function drawBoulder(o) {
+  const cx = o.x + o.w/2, cy = o.y + o.h/2, r = o.w/2;
+  const rot = -(frame * speed * 0.05);
+  const bGrad = ctx.createRadialGradient(cx-r*0.3, cy-r*0.3, r*0.1, cx, cy, r);
+  bGrad.addColorStop(0, '#8B7355');
+  bGrad.addColorStop(1, '#2A1E10');
+  ctx.fillStyle = bGrad;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(rot);
+  ctx.beginPath();
+  ctx.arc(0, 0, r, 0, Math.PI*2);
+  ctx.fill();
+  // Cracks
+  ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(-r*0.3, -r*0.5); ctx.lineTo(r*0.2, r*0.1); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(r*0.3, -r*0.3); ctx.lineTo(-r*0.1, r*0.4); ctx.stroke();
+  // Moss
+  ctx.fillStyle = 'rgba(30,80,20,0.5)';
+  ctx.beginPath(); ctx.arc(r*0.2, -r*0.4, r*0.2, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function drawPillar(o) {
+  // Hanging from ceiling
+  ctx.fillStyle = '#4A3820';
+  ctx.fillRect(o.x, 0, o.w, o.y + o.h);
+  ctx.fillStyle = '#2A1808';
+  ctx.fillRect(o.x - 6, 0, o.w + 12, 20);
+  ctx.fillRect(o.x - 6, o.y + o.h - 20, o.w + 12, 20);
+  // Spike tip
+  ctx.fillStyle = '#C0A060';
+  ctx.beginPath();
+  ctx.moveTo(o.x - 4, o.y + o.h);
+  ctx.lineTo(o.x + o.w/2, o.y + o.h + 20);
+  ctx.lineTo(o.x + o.w + 4, o.y + o.h);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawLowObstacle(o) {
+  // Low wall — must slide under
+  ctx.fillStyle = '#5A3A1A';
+  ctx.fillRect(o.x, o.y, o.w, o.h);
+  ctx.fillStyle = 'rgba(200,160,80,0.15)';
+  ctx.fillRect(o.x, o.y, o.w, 5);
+  ctx.font = 'bold 10px serif';
+  ctx.fillStyle = 'rgba(255,150,50,0.6)';
+  ctx.fillText('SLIDE!', o.x + 8, o.y - 6);
+}
+
+function drawGems() {
+  gems.forEach(g => {
+    if (g.collected) return;
+    const bob = Math.sin(frame * 0.08 + g.bob) * 4;
+    const gy2 = g.y + bob;
+
+    // Glow
+    const glow = ctx.createRadialGradient(g.x, gy2, 1, g.x, gy2, 16);
+    glow.addColorStop(0, 'rgba(100,200,255,0.6)');
+    glow.addColorStop(1, 'rgba(100,200,255,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath(); ctx.arc(g.x, gy2, 16, 0, Math.PI*2); ctx.fill();
+
+    // Diamond shape
+    ctx.save();
+    ctx.translate(g.x, gy2);
+    ctx.rotate(Math.PI/4 + frame*0.03);
+    const gr = ctx.createLinearGradient(-g.r, -g.r, g.r, g.r);
+    gr.addColorStop(0, '#A0EEFF');
+    gr.addColorStop(0.4, '#40B0FF');
+    gr.addColorStop(1, '#0060C0');
+    ctx.fillStyle = gr;
+    ctx.beginPath();
+    ctx.rect(-g.r*0.7, -g.r*0.7, g.r*1.4, g.r*1.4);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(200,240,255,0.8)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+  });
+}
+
+function drawPlayer() {
+  const px = player.x, py = player.y;
+  const pw = player.w, ph = player.h;
+
+  // Trail
+  player.trail.forEach((t, i) => {
+    const alpha = (i / player.trail.length) * 0.3;
+    ctx.fillStyle = `rgba(255,150,50,${alpha})`;
+    ctx.fillRect(t.x, t.y, pw * (i/player.trail.length), ph * (i/player.trail.length));
+  });
+
+  // Invincibility flash
+  if (player.invincible > 0 && Math.floor(player.invincible / 5) % 2 === 0) return;
+
+  ctx.save();
+  ctx.translate(px + pw/2, py + ph/2);
+
+  if (player.sliding) {
+    ctx.scale(1.3, 0.5);
+  }
+
+  const cx = -pw/2, cy = -ph/2;
+
+  // Body
+  const bodyGrad = ctx.createLinearGradient(cx, cy, cx+pw, cy+ph);
+  bodyGrad.addColorStop(0, '#D4901A');
+  bodyGrad.addColorStop(1, '#8B5A10');
+  ctx.fillStyle = bodyGrad;
+  ctx.fillRect(cx+6, cy+22, pw-12, ph-28);
+
+  // Legs (animated run)
+  const legSwing = Math.sin(frame * 0.25) * 8;
+  ctx.fillStyle = '#5A3A0A';
+  ctx.fillRect(cx+6, cy+ph-18+legSwing, pw/2-4, 18);
+  ctx.fillRect(cx+pw/2, cy+ph-18-legSwing, pw/2-4, 18);
+
+  // Boots
+  ctx.fillStyle = '#3A2808';
+  ctx.fillRect(cx+4, cy+ph-10+legSwing, pw/2-2, 10);
+  ctx.fillRect(cx+pw/2, cy+ph-10-legSwing, pw/2-2, 10);
+
+  // Arms
+  const armSwing = Math.sin(frame * 0.25) * 12;
+  ctx.fillStyle = '#C07810';
+  ctx.fillRect(cx, cy+24+armSwing, 8, 22);
+  ctx.fillRect(cx+pw-8, cy+24-armSwing, 8, 22);
+
+  // Head
+  ctx.fillStyle = '#E8A030';
+  ctx.beginPath();
+  ctx.arc(0, cy+14, 14, 0, Math.PI*2);
+  ctx.fill();
+
+  // Hair / hat
+  ctx.fillStyle = '#4A2808';
+  ctx.fillRect(-12, cy, 24, 10);
+  ctx.beginPath();
+  ctx.arc(0, cy+2, 13, Math.PI, 0);
+  ctx.fill();
+
+  // Face
+  ctx.fillStyle = '#0A0A0A';
+  ctx.beginPath(); ctx.arc(-4, cy+14, 2.5, 0, Math.PI*2); ctx.fill(); // eye
+  ctx.beginPath(); ctx.arc(4, cy+14, 2.5, 0, Math.PI*2); ctx.fill();  // eye
+  // Determined look
+  ctx.strokeStyle = '#0A0A0A';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(-7, cy+10); ctx.lineTo(-1, cy+12); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(7, cy+10); ctx.lineTo(1, cy+12); ctx.stroke();
+
+  // Scarf
+  ctx.fillStyle = '#C0200A';
+  ctx.fillRect(cx+4, cy+22, pw-8, 6);
+  const scarfFlow = Math.sin(frame * 0.2) * 6;
+  ctx.beginPath();
+  ctx.moveTo(cx+pw-4, cy+22);
+  ctx.lineTo(cx+pw+14, cy+22+scarfFlow);
+  ctx.lineTo(cx+pw+10, cy+28+scarfFlow);
+  ctx.lineTo(cx+pw-4, cy+28);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawParticles() {
+  particles.forEach(p => {
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI*2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+}
+
+function drawHUD() {
+  // Score bar background
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.fillRect(0, 0, W, 44);
+
+  // Distance bar
+  const dist = Math.min(distance / 5000, 1);
+  ctx.fillStyle = 'rgba(255,184,48,0.15)';
+  ctx.fillRect(0, 40, W, 4);
+  ctx.fillStyle = 'rgba(255,184,48,0.6)';
+  ctx.fillRect(0, 40, W * dist, 4);
+
+  // Speed indicator
+  ctx.fillStyle = 'rgba(255,184,48,0.5)';
+  ctx.font = '10px Cinzel';
+  ctx.fillText(`SPEED: ${speed.toFixed(1)}x`, W/2 - 30, 28);
+
+  // Combo
+  if (combo > 1) {
+    const comboEl = document.getElementById('combo-display');
+    comboEl.style.opacity = '1';
+    comboEl.textContent = `✦ COMBO x${combo} ✦`;
+  } else {
+    document.getElementById('combo-display').style.opacity = '0';
+  }
+}
+
+// ─── Collision ────────────────────────────────────────
+function rectsOverlap(ax, ay, aw, ah, bx, by, bw, bh) {
+  const margin = 10;
+  return ax+margin < bx+bw-margin && ax+aw-margin > bx+margin &&
+         ay+margin < by+bh-margin && ay+ah-margin > by+margin;
+}
+
+function hitObstacle() {
+  if (player.invincible > 0) return;
+  lives--;
+  player.invincible = 80;
+  combo = 0;
+  spawnParticles(player.x+player.w/2, player.y+player.h/2, '#FF4444', 16, -3);
+  updateUI();
+  if (lives <= 0) {
+    setTimeout(showDead, 300);
+    state = 'dying';
+  }
+  // Screen shake
+  shakeTimer = 15;
+}
+
+let shakeTimer = 0;
+
+// ─── Main Loop ────────────────────────────────────────
+let animId;
+function loop() {
+  if (state !== 'playing' && state !== 'dying') return;
+  frame++;
+  distance += speed;
+  score = Math.floor(distance / 10);
+  document.getElementById('scoreVal').textContent = score;
+
+  // Increase speed
+  speed = 5 + distance / 2000;
+
+  // Scroll offsets
+  bgOffset += speed * 0.5;
+  mgOffset += speed * 0.8;
+  fgOffset += speed;
+
+  // Spawn
+  spawnTimer++;
+  const spawnInterval = Math.max(60, 120 - distance/200);
+  if (spawnTimer > spawnInterval) {
+    spawnObstacle();
+    spawnTimer = 0;
+  }
+
+  gemTimer++;
+  if (gemTimer > 90) { spawnGem(); gemTimer = 0; }
+
+  torchTimer++;
+  if (torchTimer > 180) { spawnTorch(); torchTimer = 0; }
+
+  // Slide timer
+  if (player.sliding) {
+    player.slideTimer--;
+    if (player.slideTimer <= 0) {
+      player.sliding = false;
+      player.h = 60;
+      player.y = GROUND;
+    }
+  }
+
+  // Physics
+  if (!player.onGround) {
+    player.vy += 0.7; // gravity
+    player.y += player.vy;
+    if (player.y >= GROUND) {
+      player.y = player.sliding ? GROUND + 32 : GROUND;
+      player.vy = 0;
+      player.onGround = true;
+      jumpCount = 0;
+    }
+  }
+
+  // Trail
+  player.trail.push({ x: player.x, y: player.y });
+  if (player.trail.length > 6) player.trail.shift();
+
+  // Invincible countdown
+  if (player.invincible > 0) player.invincible--;
+
+  // Move obstacles
+  obstacles.forEach(o => o.x -= speed);
+  obstacles = obstacles.filter(o => o.x > -100);
+
+  // Move gems
+  gems.forEach(g => g.x -= speed);
+  gems = gems.filter(g => g.x > -30);
+
+  // Move torches
+  torches.forEach(t => t.x -= speed);
+  torches = torches.filter(t => t.x > -30);
+
+  // Collision: obstacles
+  obstacles.forEach(o => {
+    if (rectsOverlap(player.x, player.y, player.w, player.h, o.x, o.y, o.w, o.h)) {
+      hitObstacle();
+      spawnParticles(o.x+o.w/2, o.y+o.h/2, '#8B6020', 8);
+    }
+  });
+
+  // Collision: gems
+  gems.forEach(g => {
+    if (!g.collected && rectsOverlap(player.x, player.y, player.w, player.h, g.x-g.r, g.y-g.r, g.r*2, g.r*2)) {
+      g.collected = true;
+      combo++;
+      comboTimer = 60;
+      const bonus = combo > 4 ? 5 : combo > 2 ? 3 : 1;
+      score += 10 * bonus;
+      spawnParticles(g.x, g.y, '#40B0FF', 10);
+      spawnParticles(g.x, g.y, '#FFFFFF', 5);
+    }
+  });
+
+  // Combo decay
+  if (comboTimer > 0) comboTimer--;
+  else if (combo > 0) combo = 0;
+
+  // Move particles
+  particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy; p.vy += 0.1;
+    p.life -= 0.03;
+  });
+  particles = particles.filter(p => p.life > 0);
+
+  // ─── Draw ───────────────────────────────────────
+  ctx.save();
+  if (shakeTimer > 0) {
+    ctx.translate(
+      (Math.random()-0.5)*(shakeTimer*0.8),
+      (Math.random()-0.5)*(shakeTimer*0.6)
+    );
+    shakeTimer--;
+  }
+
+  drawBackground();
+  drawMidground();
+  drawTorches();
+  drawGround();
+  drawGems();
+  obstacles.forEach(drawObstacle);
+  drawPlayer();
+  drawParticles();
+  drawHUD();
+
+  ctx.restore();
+
+  animId = requestAnimationFrame(loop);
+}
+
+// Init — draw static background on menu
+(function drawMenu() {
+  ctx.fillStyle = '#050510';
+  ctx.fillRect(0, 0, W, H);
+  drawTempleShape(100, 100);
+  drawTempleShape(500, 60);
+  ctx.fillStyle = 'rgba(255,184,48,0.05)';
+  ctx.fillRect(0, H-160, W, 160);
+})();
+</script>
+</body>
+</html>
